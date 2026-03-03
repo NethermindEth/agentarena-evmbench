@@ -36,7 +36,9 @@ cp "${EVM_BENCH_DETECT_MD}" "${AGENT_DIR}/AGENTS.md"
 # Ensure a clean output.
 rm -f "${SUBMISSION_DIR}/audit.md"
 
-LAUNCHER_PROMPT=$'You are an expert smart contract auditor.\nFirst read the AGENTS.md file for your detailed instructions.\nThen proceed. Ensure to follow the submission instructions exactly.'
+LAUNCHER_PROMPT='You are an expert smart contract auditor.
+First read the AGENTS.md file for your detailed instructions.
+Then proceed. Ensure to follow the submission instructions exactly.'
 
 AUTH_PATH="${AGENT_DIR}/.codex/auth.json"
 if [[ ! -f "${AUTH_PATH}" ]]; then
