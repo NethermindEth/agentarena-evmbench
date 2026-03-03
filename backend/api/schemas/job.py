@@ -14,7 +14,7 @@ class StartJobForm(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     model: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
-    openai_key: Annotated[str | None, StringConstraints(strip_whitespace=True, min_length=1)]
+    api_key: Annotated[str | None, StringConstraints(strip_whitespace=True, min_length=1)]
     file: UploadFile
 
     @classmethod
@@ -22,10 +22,10 @@ class StartJobForm(BaseModel):
         cls,
         model: Annotated[str, Form()],
         file: Annotated[UploadFile, File()],
-        openai_key: Annotated[str | None, Form()] = None,
+        api_key: Annotated[str | None, Form()] = None,
     ) -> 'StartJobForm':
         try:
-            return cls(model=model, openai_key=openai_key, file=file)
+            return cls(model=model, api_key=api_key, file=file)
         except ValidationError as exc:
             # TODO(es3n1n): this is **very** bad
             errors = exc.errors()
@@ -44,12 +44,12 @@ class StartJobForm(BaseModel):
             raise HTTPException(status_code=412, detail=messages[0]) from exc
 
     @model_validator(mode='after')
-    def require_openai_key(self) -> 'StartJobForm':
+    def require_api_key(self) -> 'StartJobForm':
         # Skip validation if using proxy's static key or backend's static key
         if settings.BACKEND_USE_PROXY_STATIC_KEY:
             return self
-        if settings.BACKEND_STATIC_OAI_KEY is None and not self.openai_key:
-            msg = 'openai_key is required'
+        if settings.BACKEND_STATIC_OAI_KEY is None and not self.api_key:
+            msg = 'API key is required'
             raise ValueError(msg)
         return self
 

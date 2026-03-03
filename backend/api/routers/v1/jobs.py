@@ -71,35 +71,59 @@ def _require_allowed_model(model: str) -> None:
         raise HTTPException(status_code=401, detail='Model is not allowed')
 
 
-def _resolve_openai_key(form: StartJobForm) -> str | None:
-    # Determine which OpenAI key mode to use:
+def _is_claude_model(model: str) -> bool:
+    return model.startswith('claude-')
+
+
+def _resolve_api_key(form: StartJobForm) -> str | None:
+    # Determine which API key to use:
     # 1. BACKEND_USE_PROXY_STATIC_KEY: Use "STATIC" marker, real key stays in oai_proxy only
     # 2. BACKEND_STATIC_OAI_KEY: Backend knows the key (legacy mode)
     # 3. User-provided key
     static_key = settings.BACKEND_STATIC_OAI_KEY.get_secret_value() if settings.BACKEND_STATIC_OAI_KEY else None
-    return static_key or form.openai_key
+    return static_key or form.api_key
 
 
-async def _maybe_validate_user_key(*, form: StartJobForm, openai_key: str | None) -> None:
+async def _validate_anthropic_key(api_key: str) -> None:
+    async with AsyncClient() as client:
+        response = await client.get(
+            'https://api.anthropic.com/v1/models',
+            headers={
+                'x-api-key': api_key,
+                'anthropic-version': '2023-06-01',
+            },
+        )
+        if response.status_code != HTTPStatus.OK:
+            raise HTTPException(status_code=401, detail='Invalid Anthropic API key')
+
+
+async def _validate_openai_key(api_key: str) -> None:
+    async with AsyncClient() as client:
+        response = await client.get(
+            'https://api.openai.com/v1/models',
+            headers={
+                'Authorization': f'Bearer {api_key}',
+            },
+        )
+        if response.status_code != HTTPStatus.OK:
+            raise HTTPException(status_code=401, detail='Invalid OpenAI API key')
+
+
+async def _maybe_validate_user_key(*, form: StartJobForm, api_key: str | None) -> None:
     # Validate user-provided keys (skip if using static keys)
     if settings.BACKEND_USE_PROXY_STATIC_KEY:
         return
     if settings.BACKEND_STATIC_OAI_KEY is not None:
         return
-    if not form.openai_key:
+    if not form.api_key:
         return
-    if not openai_key:
+    if not api_key:
         return
 
-    async with AsyncClient() as client:
-        response = await client.get(
-            'https://api.openai.com/v1/models',
-            headers={
-                'Authorization': f'Bearer {openai_key}',
-            },
-        )
-        if response.status_code != HTTPStatus.OK:
-            raise HTTPException(status_code=401, detail='Invalid API key')
+    if _is_claude_model(form.model):
+        await _validate_anthropic_key(api_key)
+    else:
+        await _validate_openai_key(api_key)
 
 
 def _encode_openai_token(*, openai_key: str, use_proxy_static: bool, use_proxy_tokens: bool) -> tuple[str, str]:
@@ -134,19 +158,19 @@ async def start_job(
 
     use_proxy_static = settings.BACKEND_USE_PROXY_STATIC_KEY
     use_proxy_tokens = settings.BACKEND_OAI_KEY_MODE == 'proxy'
-    openai_key = _resolve_openai_key(form)
+    api_key = _resolve_api_key(form)
 
-    if not use_proxy_static and not openai_key:
-        raise HTTPException(status_code=412, detail='openai_key is required')
+    if not use_proxy_static and not api_key:
+        raise HTTPException(status_code=412, detail='API key is required')
 
-    await _maybe_validate_user_key(form=form, openai_key=openai_key)
+    await _maybe_validate_user_key(form=form, api_key=api_key)
 
     job_id = uuid.uuid4()
     secret_ref = os.urandom(32).hex()
     result_token = os.urandom(32).hex()
 
     openai_token, key_mode = _encode_openai_token(
-        openai_key=openai_key or '',
+        openai_key=api_key or '',
         use_proxy_static=use_proxy_static,
         use_proxy_tokens=use_proxy_tokens,
     )

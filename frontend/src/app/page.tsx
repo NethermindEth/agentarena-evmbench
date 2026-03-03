@@ -33,8 +33,9 @@ import paradigmSmall from "../../public/paradigm-small.svg"
 export default function Page() {
   const router = useRouter()
   const { files, packageName, setUpload, clearUpload } = useUploadStore()
-  const [openaiKey, setOpenaiKey] = useSessionStorage("evmbench.openaiKey", "")
+  const [apiKey, setApiKey] = useSessionStorage("evmbench.apiKey", "")
   const [model, setModel] = useState("codex-gpt-5.2")
+  const isClaude = model.startsWith("claude-")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [recentJobs, setRecentJobs] = useLocalStorage<RecentJob[]>(
@@ -67,9 +68,9 @@ export default function Page() {
 
   const handleKeyChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      setOpenaiKey(event.target.value)
+      setApiKey(event.target.value)
     },
-    [setOpenaiKey],
+    [setApiKey],
   )
 
   const handleSubmit = async () => {
@@ -78,7 +79,7 @@ export default function Page() {
       setSubmitError("Authorize with GitHub to start analysis.")
       return
     }
-    const trimmedKey = openaiKey.trim()
+    const trimmedKey = apiKey.trim()
 
     setIsSubmitting(true)
     setSubmitError(null)
@@ -198,16 +199,16 @@ export default function Page() {
                 {!isConfigLoading && !keyPredefined && (
                   <div className="grid gap-1">
                     <Label
-                      htmlFor="openai-key"
+                      htmlFor="api-key"
                       className="text-xs text-foreground"
                     >
-                      OpenAI API Key
+                      {isClaude ? "Anthropic API Key" : "OpenAI API Key"}
                     </Label>
                     <Input
-                      id="openai-key"
+                      id="api-key"
                       type="password"
-                      placeholder="sk-&hellip;"
-                      value={openaiKey}
+                      placeholder={isClaude ? "sk-ant-\u2026" : "sk-\u2026"}
+                      value={apiKey}
                       onChange={handleKeyChange}
                     />
                   </div>
@@ -229,6 +230,12 @@ export default function Page() {
                       </SelectItem>
                       <SelectItem value="codex-gpt-5.1-codex-max">
                         codex-gpt-5.1-codex-max
+                      </SelectItem>
+                      <SelectItem value="claude-opus-4.5">
+                        claude-opus-4.5
+                      </SelectItem>
+                      <SelectItem value="claude-sonnet-4.5">
+                        claude-sonnet-4.5
                       </SelectItem>
                     </SelectContent>
                   </Select>

@@ -5,5 +5,6 @@ RUN python3 -m pip install --no-cache-dir httpx uvloop loguru
 COPY docker/worker/init.py /tmp/init.py
 COPY worker_runner/ /opt/evmbench/worker_runner/
 RUN chmod +x /opt/evmbench/worker_runner/run_codex_detect.sh
+RUN chmod +x /opt/evmbench/worker_runner/run_claude_detect.sh
 
 CMD ["python3", "/tmp/init.py"]
