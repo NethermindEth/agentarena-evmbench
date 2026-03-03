@@ -54,6 +54,9 @@ RUN set -eux; \
     cd /; rm -rf /usr/local/src/codex; \
     codex --version
 
+# install claude code cli
+RUN npm install -g @anthropic-ai/claude-code && claude --version
+
 # install ripgrep
 RUN apt-get update && apt-get install -y --no-install-recommends ripgrep && rm -rf /var/lib/apt/lists/*
 
