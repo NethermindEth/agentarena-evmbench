@@ -39,6 +39,7 @@ RUNNER_DIR = Path(os.getenv('EVM_BENCH_RUNNER_DIR') or '/opt/evmbench/worker_run
 DETECT_MD_PATH = RUNNER_DIR / 'detect.md'
 MODEL_MAP_PATH = RUNNER_DIR / 'model_map.json'
 CODEX_RUNNER_SH = RUNNER_DIR / 'run_codex_detect.sh'
+CLAUDE_RUNNER_SH = RUNNER_DIR / 'run_claude_detect.sh'
 
 
 def _write_codex_proxy_config(*, home: Path) -> None:
@@ -98,6 +99,14 @@ def _resolve_codex_model(*, model_key: str, model_map: dict[str, str]) -> str:
         # Allow passing a raw Codex model id via AGENT_ID.
         return key
     return model_map.get('codex-gpt-5.2', 'gpt-5.2-2025-12-11')
+
+
+def _get_provider(model_key: str) -> str:
+    """Return 'claude' or 'codex' based on model_key prefix."""
+    key = (model_key or '').strip().lower()
+    if key.startswith('claude-'):
+        return 'claude'
+    return 'codex'
 
 
 def _extract_fenced_json(text: str) -> str:
@@ -209,6 +218,45 @@ def _run_codex_detect(*, openai_token: str, key_mode: str) -> Path:
     return audit_md_path
 
 
+def _run_claude_detect(*, anthropic_token: str) -> Path:
+    env = os.environ.copy()
+    env['ANTHROPIC_API_KEY'] = anthropic_token
+    env['HOME'] = str(AGENT_DIR)
+    env['AGENT_DIR'] = str(AGENT_DIR)
+    env['SUBMISSION_DIR'] = str(SUBMISSION_DIR)
+    env['LOGS_DIR'] = str(LOGS_DIR)
+
+    if not DETECT_MD_PATH.exists():
+        raise RuntimeError(f'Missing detect instructions: {DETECT_MD_PATH}')
+    if not CLAUDE_RUNNER_SH.exists():
+        raise RuntimeError(f'Missing Claude runner: {CLAUDE_RUNNER_SH}')
+
+    model_map = _load_model_map()
+    model = model_map.get(MODEL_KEY, MODEL_KEY)  # passthrough if not in map
+    env['CLAUDE_MODEL'] = model
+    env['EVM_BENCH_DETECT_MD'] = str(DETECT_MD_PATH)
+
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    proc = subprocess.run(  # noqa: S603
+        [str(CLAUDE_RUNNER_SH)],
+        cwd=str(AGENT_DIR),
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=False,
+    )
+    (LOGS_DIR / 'runner.log').write_text(proc.stdout or '', encoding='utf-8')
+    if proc.returncode != 0:
+        raise RuntimeError(f'Claude runner failed with code={proc.returncode}:\n{proc.stdout}')
+
+    audit_md_path = SUBMISSION_DIR / 'audit.md'
+    if not audit_md_path.exists():
+        raise RuntimeError(f'Missing expected output: {audit_md_path}')
+
+    return audit_md_path
+
+
 def _unpack_bundle(bundle: bytes, work_dir: Path) -> tuple[Path, str, str]:
     upload_zip_path = work_dir / 'upload.zip'
     key_payload: dict | None = None
@@ -268,7 +316,7 @@ async def main() -> None:
 
     with tempfile.TemporaryDirectory(prefix='evmbench-worker-') as tmpdir:
         work_dir = Path(tmpdir)
-        upload_zip_path, openai_token, key_mode = _unpack_bundle(bundle, work_dir)
+        upload_zip_path, token, key_mode = _unpack_bundle(bundle, work_dir)
 
         if AUDIT_DIR.exists():
             shutil.rmtree(AUDIT_DIR)
@@ -279,7 +327,12 @@ async def main() -> None:
 
         logger.info('Extracted the bundle, running detect-only agent...')
         try:
-            audit_md = _run_codex_detect(openai_token=openai_token, key_mode=key_mode)
+            provider = _get_provider(MODEL_KEY)
+            if provider == 'claude':
+                # For Claude, the "openai_token" field contains the Anthropic key
+                audit_md = _run_claude_detect(anthropic_token=token)
+            else:
+                audit_md = _run_codex_detect(openai_token=token, key_mode=key_mode)
             audit_text = audit_md.read_text()
             _extract_json_payload(audit_text)
 
