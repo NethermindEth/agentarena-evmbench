@@ -16,8 +16,48 @@ import json
 import sys
 import time
 from pathlib import Path
-
 import requests
+
+
+_SEVERITY_MAP = {
+    "critical": "Critical",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "info": "Informational",
+    "informational": "Informational",
+}
+
+
+def vulnerabilities_to_findings(result: dict) -> dict:
+    """Convert a job result object into {"findings": [...]}.
+
+    Each vulnerability is mapped to a finding with:
+    - title:       copied directly
+    - severity:    title-cased (e.g. "low" -> "Low", "info" -> "Informational")
+    - description: impact + summary + each desc entry, joined by double newlines
+    - file_paths:  list of .file from each description entry
+    """
+    findings = []
+    for vuln in result.get("result", {}).get("vulnerabilities", []):
+        desc_entries = vuln.get("description", [])
+        description = "\n\n".join(
+            part for part in [
+                vuln.get("impact", ""),
+                vuln.get("summary", ""),
+                *[entry.get("desc", "") for entry in desc_entries],
+            ]
+            if part
+        )
+        raw_severity = (vuln.get("severity") or "").strip().lower()
+        findings.append({
+            "title": vuln.get("title", ""),
+            "severity": _SEVERITY_MAP.get(raw_severity, vuln.get("severity", "")),
+            "description": description,
+            "file_paths": [entry["file"] for entry in desc_entries if entry.get("file")],
+        })
+    return {"findings": findings}
+
 
 POLL_INTERVAL = 1       # seconds between status polls
 RETRY_DELAY = 3         # seconds to wait before retrying after a failed job
@@ -76,7 +116,7 @@ def run(base_url: str, model: str, api_key: str, zip_path: Path) -> dict:
         result = poll_job(base_url, job_id)
 
         if result["status"] == "succeeded":
-            return result
+            return vulnerabilities_to_findings(result)
 
         print(f"Job failed. Retrying in {RETRY_DELAY}s...")
         time.sleep(RETRY_DELAY)
