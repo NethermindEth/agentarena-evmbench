@@ -75,6 +75,10 @@ def _is_claude_model(model: str) -> bool:
     return model.startswith('claude-')
 
 
+def _is_gemini_model(model: str) -> bool:
+    return model.startswith('gemini-')
+
+
 def _resolve_api_key(form: StartJobForm) -> str | None:
     # Determine which API key to use:
     # 1. BACKEND_USE_PROXY_STATIC_KEY: Use "STATIC" marker, real key stays in oai_proxy only
@@ -82,6 +86,16 @@ def _resolve_api_key(form: StartJobForm) -> str | None:
     # 3. User-provided key
     static_key = settings.BACKEND_STATIC_OAI_KEY.get_secret_value() if settings.BACKEND_STATIC_OAI_KEY else None
     return static_key or form.api_key
+
+
+async def _validate_gemini_key(api_key: str) -> None:
+    async with AsyncClient() as client:
+        response = await client.get(
+            'https://generativelanguage.googleapis.com/v1beta/models',
+            params={'key': api_key},
+        )
+        if response.status_code != HTTPStatus.OK:
+            raise HTTPException(status_code=401, detail='Invalid Google AI API key')
 
 
 async def _validate_anthropic_key(api_key: str) -> None:
@@ -122,6 +136,8 @@ async def _maybe_validate_user_key(*, form: StartJobForm, api_key: str | None) -
 
     if _is_claude_model(form.model):
         await _validate_anthropic_key(api_key)
+    elif _is_gemini_model(form.model):
+        await _validate_gemini_key(api_key)
     else:
         await _validate_openai_key(api_key)
 

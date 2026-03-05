@@ -57,6 +57,9 @@ RUN set -eux; \
 # install claude code cli
 RUN npm install -g @anthropic-ai/claude-code && claude --version
 
+# install gemini cli
+RUN npm install -g @google/gemini-cli && gemini --version
+
 # install ripgrep
 RUN apt-get update && apt-get install -y --no-install-recommends ripgrep && rm -rf /var/lib/apt/lists/*
 

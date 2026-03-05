@@ -36,6 +36,7 @@ export default function Page() {
   const [apiKey, setApiKey] = useSessionStorage("evmbench.apiKey", "")
   const [model, setModel] = useState("codex-gpt-5.2")
   const isClaude = model.startsWith("claude-")
+  const isGemini = model.startsWith("gemini-")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [recentJobs, setRecentJobs] = useLocalStorage<RecentJob[]>(
@@ -202,12 +203,12 @@ export default function Page() {
                       htmlFor="api-key"
                       className="text-xs text-foreground"
                     >
-                      {isClaude ? "Anthropic API Key" : "OpenAI API Key"}
+                      {isClaude ? "Anthropic API Key" : isGemini ? "Google AI API Key" : "OpenAI API Key"}
                     </Label>
                     <Input
                       id="api-key"
                       type="password"
-                      placeholder={isClaude ? "sk-ant-\u2026" : "sk-\u2026"}
+                      placeholder={isClaude ? "sk-ant-\u2026" : isGemini ? "AIza\u2026" : "sk-\u2026"}
                       value={apiKey}
                       onChange={handleKeyChange}
                     />
@@ -236,6 +237,12 @@ export default function Page() {
                       </SelectItem>
                       <SelectItem value="claude-sonnet-4.5">
                         claude-sonnet-4.5
+                      </SelectItem>
+                      <SelectItem value="gemini-2.5-pro">
+                        gemini-2.5-pro
+                      </SelectItem>
+                      <SelectItem value="gemini-2.5-flash">
+                        gemini-2.5-flash
                       </SelectItem>
                     </SelectContent>
                   </Select>

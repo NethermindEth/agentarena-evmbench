@@ -40,6 +40,7 @@ DETECT_MD_PATH = RUNNER_DIR / 'detect.md'
 MODEL_MAP_PATH = RUNNER_DIR / 'model_map.json'
 CODEX_RUNNER_SH = RUNNER_DIR / 'run_codex_detect.sh'
 CLAUDE_RUNNER_SH = RUNNER_DIR / 'run_claude_detect.sh'
+GEMINI_RUNNER_SH = RUNNER_DIR / 'run_gemini_detect.sh'
 
 
 def _write_codex_proxy_config(*, home: Path) -> None:
@@ -102,10 +103,12 @@ def _resolve_codex_model(*, model_key: str, model_map: dict[str, str]) -> str:
 
 
 def _get_provider(model_key: str) -> str:
-    """Return 'claude' or 'codex' based on model_key prefix."""
+    """Return 'claude', 'gemini', or 'codex' based on model_key prefix."""
     key = (model_key or '').strip().lower()
     if key.startswith('claude-'):
         return 'claude'
+    if key.startswith('gemini-'):
+        return 'gemini'
     return 'codex'
 
 
@@ -214,6 +217,45 @@ def _run_codex_detect(*, openai_token: str, key_mode: str) -> Path:
     if not audit_md_path.exists():
         msg = f'Missing expected output: {audit_md_path}'
         raise RuntimeError(msg)
+
+    return audit_md_path
+
+
+def _run_gemini_detect(*, gemini_token: str) -> Path:
+    env = os.environ.copy()
+    env['GEMINI_API_KEY'] = gemini_token
+    env['HOME'] = str(AGENT_DIR)
+    env['AGENT_DIR'] = str(AGENT_DIR)
+    env['SUBMISSION_DIR'] = str(SUBMISSION_DIR)
+    env['LOGS_DIR'] = str(LOGS_DIR)
+
+    if not DETECT_MD_PATH.exists():
+        raise RuntimeError(f'Missing detect instructions: {DETECT_MD_PATH}')
+    if not GEMINI_RUNNER_SH.exists():
+        raise RuntimeError(f'Missing Gemini runner: {GEMINI_RUNNER_SH}')
+
+    model_map = _load_model_map()
+    model = model_map.get(MODEL_KEY, MODEL_KEY)  # passthrough if not in map
+    env['GEMINI_MODEL'] = model
+    env['EVM_BENCH_DETECT_MD'] = str(DETECT_MD_PATH)
+
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    proc = subprocess.run(  # noqa: S603
+        [str(GEMINI_RUNNER_SH)],
+        cwd=str(AGENT_DIR),
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=False,
+    )
+    (LOGS_DIR / 'runner.log').write_text(proc.stdout or '', encoding='utf-8')
+    if proc.returncode != 0:
+        raise RuntimeError(f'Gemini runner failed with code={proc.returncode}:\n{proc.stdout}')
+
+    audit_md_path = SUBMISSION_DIR / 'audit.md'
+    if not audit_md_path.exists():
+        raise RuntimeError(f'Missing expected output: {audit_md_path}')
 
     return audit_md_path
 
@@ -331,6 +373,9 @@ async def main() -> None:
             if provider == 'claude':
                 # For Claude, the "openai_token" field contains the Anthropic key
                 audit_md = _run_claude_detect(anthropic_token=token)
+            elif provider == 'gemini':
+                # For Gemini, the "openai_token" field contains the Google AI key
+                audit_md = _run_gemini_detect(gemini_token=token)
             else:
                 audit_md = _run_codex_detect(openai_token=token, key_mode=key_mode)
             audit_text = audit_md.read_text()
