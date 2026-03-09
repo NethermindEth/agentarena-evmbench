@@ -146,7 +146,22 @@ Open:
 - `http://127.0.0.1:3000` (frontend)
 - `http://127.0.0.1:1337/v1/integration/frontend` (backend config endpoint)
 
+## Supported models
+
+The supported models are:
+
+- codex-gpt-5.1-codex-max
+- codex-gpt-5.2
+- claude-opus-4.5
+- claude-sonnet-4.5
+- gemini-2.5-pro
+- gemini-2.5-flash
+
+Depending on the chosen model, the API key must be valid for ChatGPT, Anthropic or Google AI respectively.
+
 ## Acknowledgments
-Thank you to many folks on the OtterSec team for support, particularly with building the frontend: es3n1n, jktrn, TrixterTheTux, sahuang
+Thank you to many folks on the OtterSec team for support, particularly with building the frontend: es3n1n, jktrn, TrixterTheTux, sahuang.
+
+Finally, the Nethermind team for enhancing the list of allowed models.
 
 [![Apache-2.0 License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](/LICENSE)
