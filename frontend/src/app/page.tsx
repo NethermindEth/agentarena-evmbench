@@ -232,17 +232,17 @@ export default function Page() {
                       <SelectItem value="codex-gpt-5.1-codex-max">
                         codex-gpt-5.1-codex-max
                       </SelectItem>
-                      <SelectItem value="claude-opus-4.5">
-                        claude-opus-4.5
+                      <SelectItem value="claude-opus-4.6">
+                        claude-opus-4.6
                       </SelectItem>
-                      <SelectItem value="claude-sonnet-4.5">
-                        claude-sonnet-4.5
+                      <SelectItem value="claude-sonnet-4.6">
+                        claude-sonnet-4.6
                       </SelectItem>
-                      <SelectItem value="gemini-2.5-pro">
-                        gemini-2.5-pro
+                      <SelectItem value="gemini-3.1-pro-preview">
+                        gemini-3.1-pro-preview
                       </SelectItem>
-                      <SelectItem value="gemini-2.5-flash">
-                        gemini-2.5-flash
+                      <SelectItem value="gemini-3.1-flash-lite-preview">
+                        gemini-2.5-flash-lite-preview
                       </SelectItem>
                     </SelectContent>
                   </Select>
