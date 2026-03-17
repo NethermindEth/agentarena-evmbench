@@ -235,7 +235,7 @@ export default function Page() {
                       <SelectItem value="codex-gpt-5.1-codex-max">
                         codex-gpt-5.1-codex-max
                       </SelectItem>
-                      <SelectItem value="claude-opus-4.6">
+                      <SelectItem value="claude-opus-4-6">
                         claude-opus-4.6
                       </SelectItem>
                       <SelectItem value="claude-sonnet-4.6">
