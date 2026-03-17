@@ -152,6 +152,7 @@ The supported models are:
 
 - codex-gpt-5.1-codex-max
 - codex-gpt-5.2
+- gpt-5.3-codex
 - claude-opus-4.5
 - claude-sonnet-4.5
 - gemini-2.5-pro
