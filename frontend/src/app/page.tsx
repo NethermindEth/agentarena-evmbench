@@ -226,6 +226,9 @@ export default function Page() {
                       <SelectValue placeholder="Select model" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="gpt-5.5">
+                        gpt-5.5
+                      </SelectItem>
                       <SelectItem value="gpt-5.3-codex">
                         gpt-5.3-codex
                       </SelectItem>
@@ -236,10 +239,13 @@ export default function Page() {
                         codex-gpt-5.1-codex-max
                       </SelectItem>
                       <SelectItem value="claude-opus-4-6">
-                        claude-opus-4.6
+                        claude-opus-4-6
                       </SelectItem>
-                      <SelectItem value="claude-sonnet-4.6">
-                        claude-sonnet-4.6
+                      <SelectItem value="claude-sonnet-4-6">
+                        claude-sonnet-4-6
+                      </SelectItem>
+                      <SelectItem value="claude-opus-4-7">
+                        claude-opus-4-7
                       </SelectItem>
                       <SelectItem value="gemini-3.1-pro-preview">
                         gemini-3.1-pro-preview
