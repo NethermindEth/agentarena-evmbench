@@ -36,6 +36,7 @@ Then proceed. Ensure to follow the submission instructions exactly.'
 IS_SANDBOX=1 timeout --signal=KILL "${TIMEOUT_SECONDS}s" gemini \
   --model "${GEMINI_MODEL}" \
   --yolo \
+  --skip-trust \
   "${LAUNCHER_PROMPT}" \
   > "${LOGS_DIR}/agent.log" 2>&1
 
