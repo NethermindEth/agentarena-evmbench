@@ -8,6 +8,7 @@ ALLOWED_MODELS = {
     'claude-opus-4-6',
     'claude-sonnet-4-6',
     'claude-opus-4-7',
+    'claude-opus-4-8',
     # Google AI models:
     'gemini-3.1-pro-preview',
     'gemini-3.1-flash-lite-preview',

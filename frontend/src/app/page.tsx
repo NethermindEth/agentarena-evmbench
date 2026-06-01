@@ -247,6 +247,9 @@ export default function Page() {
                       <SelectItem value="claude-opus-4-7">
                         claude-opus-4-7
                       </SelectItem>
+                      <SelectItem value="claude-opus-4-8">
+                        claude-opus-4-8
+                      </SelectItem>
                       <SelectItem value="gemini-3.1-pro-preview">
                         gemini-3.1-pro-preview
                       </SelectItem>
