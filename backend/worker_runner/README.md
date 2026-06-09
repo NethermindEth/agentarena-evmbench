@@ -9,6 +9,9 @@ The worker image copies this directory into the container at `/opt/evmbench/work
 - `detect.md`: the full instructions prompt copied to `$HOME/AGENTS.md` inside the worker container.
 - `model_map.json`: maps UI model keys (sent as `AGENT_ID`) to Codex model IDs.
 - `run_codex_detect.sh`: runs Codex once and ensures `submission/audit.md` was created.
+- `run_claude_detect.sh`: runs Claude Code once and ensures `submission/audit.md` was created.
+- `run_gemini_detect.sh`: runs Gemini CLI once and ensures `submission/audit.md` was created.
+- `run_cursor_detect.sh`: runs Cursor (`cursor-agent`) once and ensures `submission/audit.md` was created.
 
 ## Editing guidelines
 

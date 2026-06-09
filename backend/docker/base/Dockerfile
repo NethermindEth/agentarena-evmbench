@@ -60,6 +60,12 @@ RUN npm install -g @anthropic-ai/claude-code && claude --version
 # install gemini cli
 RUN npm install -g @google/gemini-cli && gemini --version
 
+# install cursor cli (cursor-agent)
+RUN curl -fsSL https://cursor.com/install | bash \
+    && cp /root/.local/bin/cursor-agent /usr/local/bin/cursor-agent \
+    && chmod 0755 /usr/local/bin/cursor-agent \
+    && cursor-agent --version
+
 # install ripgrep
 RUN apt-get update && apt-get install -y --no-install-recommends ripgrep && rm -rf /var/lib/apt/lists/*
 

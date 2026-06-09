@@ -37,6 +37,7 @@ export default function Page() {
   const [model, setModel] = useState("codex-gpt-5.2")
   const isClaude = model.startsWith("claude-")
   const isGemini = model.startsWith("gemini-")
+  const isCursor = model.startsWith("cursor-")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [recentJobs, setRecentJobs] = useLocalStorage<RecentJob[]>(
@@ -203,12 +204,12 @@ export default function Page() {
                       htmlFor="api-key"
                       className="text-xs text-foreground"
                     >
-                      {isClaude ? "Anthropic API Key" : isGemini ? "Google AI API Key" : "OpenAI API Key"}
+                      {isClaude ? "Anthropic API Key" : isGemini ? "Google AI API Key" : isCursor ? "Cursor API Key" : "OpenAI API Key"}
                     </Label>
                     <Input
                       id="api-key"
                       type="password"
-                      placeholder={isClaude ? "sk-ant-\u2026" : isGemini ? "AIza\u2026" : "sk-\u2026"}
+                      placeholder={isClaude ? "sk-ant-\u2026" : isGemini ? "AIza\u2026" : isCursor ? "key_\u2026" : "sk-\u2026"}
                       value={apiKey}
                       onChange={handleKeyChange}
                     />
@@ -258,6 +259,9 @@ export default function Page() {
                       </SelectItem>
                       <SelectItem value="gemini-3.5-flash">
                         gemini-3.5-flash
+                      </SelectItem>
+                      <SelectItem value="cursor-composer-2.5">
+                        cursor-composer-2.5
                       </SelectItem>
                     </SelectContent>
                   </Select>
